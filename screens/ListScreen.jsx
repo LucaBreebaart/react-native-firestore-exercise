@@ -1,31 +1,73 @@
 import { Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { AntDesign } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 
-const ListScreen = ({navigation}) => {
+import { getMyBucketList } from '../services/DbService';
+import { useFocusEffect } from '@react-navigation/native';
+
+const ListScreen = ({ navigation }) => {
 
     const goToAdd = () => { navigation.navigate("Add") }
-  return (
-    <SafeAreaView>
-        <View  style={styles.container}>
 
-            <Pressable style={styles.addButton} onPress={goToAdd}>
-                <Text style={styles.addButtonText}>Add</Text>
-                <Entypo name="bucket" size={16} color="green" />
-            </Pressable>
+    const [bucketItems, setBucketItems] = useState([])
+
+    // useEffect(() => {
+    //     handleGettingOfData()
+    // }, [])
+
+    useFocusEffect(
+        React.useCallback(() => {
+            // Do something when the screen is focused
+            handleGettingOfData()
+            
+            return () => {
+                // Do something when the screen is unfocused
+                // Useful for cleanup functions
+                // do nothing
+            };
+        }, [])
+    )
+
+    const handleGettingOfData = async () => {
+        var allData = await getMyBucketList()
+        // console.log("data:" + allData)
+        setBucketItems(allData)
+    }
+
+    return (
+        <SafeAreaView>
+            <View style={styles.container}>
+
+                <Pressable style={styles.addButton} onPress={goToAdd}>
+                    <Text style={styles.addButtonText}>Add</Text>
+                    <Entypo name="bucket" size={16} color="green" />
+                </Pressable>
+
+                {/* THIS WILL LOOP FOR EACH ITEM - scroll view or flatlist - must be able to scroll through the list so that im able to scroll if the list is too long */}
 
 
-            {/* THIS WILL LOOP FOR EACH ITEM */}
-            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Details")}>
-                <Text>Title</Text>
-                <AntDesign name="star" size={24} color="orange" />
-            </TouchableOpacity>
-            {/* END LOOP */}
-        </View>
-       
-    </SafeAreaView>
-  )
+                {
+                    bucketItems != [] ? (
+                        bucketItems.map((item, index) => (
+                            <TouchableOpacity key={index} style={styles.card} onPress={() => navigation.navigate("Details")}>
+                                <Text>{item.title}</Text>
+
+                                {item.priority ? <AntDesign name="star" size={24} color="orange" /> : null}
+                            </TouchableOpacity>
+                        ))
+
+                    ) : (
+                        <Text>No items</Text>
+                    )
+                }
+
+                {/* END LOOP */}
+
+            </View>
+
+        </SafeAreaView>
+    )
 }
 
 export default ListScreen
@@ -41,7 +83,8 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        marginBottom: 10,
     },
     addButton: {
         backgroundColor: 'white',
